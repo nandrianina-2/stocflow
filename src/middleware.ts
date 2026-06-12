@@ -6,7 +6,9 @@ export async function middleware(req: NextRequest) {
 
   const pathname      = req.nextUrl.pathname;
   const isAuthPage    = pathname.startsWith('/login');
-  const isPublicApi   = pathname.startsWith('/api/auth') || pathname.startsWith('/api/seed');
+  const isPublicApi   = pathname.startsWith('/api/auth')
+                     || pathname.startsWith('/api/seed')
+                     || pathname.startsWith('/api/cron');
 
   if (isPublicApi) return NextResponse.next();
 
