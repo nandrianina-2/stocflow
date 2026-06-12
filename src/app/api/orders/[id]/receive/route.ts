@@ -7,6 +7,7 @@ import PurchaseOrderItem from '@/models/PurchaseOrderItem';
 import StockMovement from '@/models/StockMovement';
 import MovementItem from '@/models/MovementItem';
 import StockLevel from '@/models/StockLevel';
+import ProductVariant from '@/models/ProductVariant';
 import { apiSuccess, apiError } from '@/lib/api-helpers';
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { connectDB } from '@/lib/db';
 import ProductVariant from '@/models/ProductVariant';
 import { productVariantSchema } from '@/schemas/product';
+import Product from '@/models/Product';
 import { apiSuccess, apiError, handleApiError } from '@/lib/api-helpers';
 
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {

@@ -6,6 +6,9 @@ import StockMovement from '@/models/StockMovement';
 import MovementItem from '@/models/MovementItem';
 import StockLevel from '@/models/StockLevel';
 import { apiSuccess, apiError } from '@/lib/api-helpers';
+import User from '@/models/User';
+import ProductVariant from '@/models/ProductVariant';
+import WarehouseLocation from '@/models/WarehouseLocation';
 
 export async function POST(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();

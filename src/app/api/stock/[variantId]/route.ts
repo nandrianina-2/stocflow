@@ -3,6 +3,8 @@ import { auth } from '@/lib/auth';
 import { connectDB } from '@/lib/db';
 import StockLevel from '@/models/StockLevel';
 import { apiSuccess, apiError } from '@/lib/api-helpers';
+import WarehouseLocation from '@/models/WarehouseLocation';
+import Warehouse from '@/models/Warehouse';
 
 export async function GET(_: NextRequest, { params }: { params: Promise<{ variantId: string }> }) {
   const session = await auth();

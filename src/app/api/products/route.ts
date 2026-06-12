@@ -2,6 +2,8 @@ import { NextRequest } from 'next/server';
 import { auth } from '@/lib/auth';
 import { connectDB } from '@/lib/db';
 import Product from '@/models/Product';
+import Category from '@/models/Category';
+import Supplier from '@/models/Supplier';
 import { productSchema } from '@/schemas/product';
 import { apiSuccess, apiError, handleApiError } from '@/lib/api-helpers';
 

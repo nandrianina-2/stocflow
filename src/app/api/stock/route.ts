@@ -3,6 +3,10 @@ import { auth } from '@/lib/auth';
 import { connectDB } from '@/lib/db';
 import StockLevel from '@/models/StockLevel';
 import { apiSuccess, apiError } from '@/lib/api-helpers';
+import ProductVariant from '@/models/ProductVariant';
+import Product from '@/models/Product';
+import WarehouseLocation from '@/models/WarehouseLocation';
+import Warehouse from '@/models/Warehouse';
 
 export async function GET(req: NextRequest) {
   const session = await auth();

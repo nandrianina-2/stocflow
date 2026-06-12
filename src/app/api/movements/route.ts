@@ -4,6 +4,7 @@ import { connectDB } from '@/lib/db';
 import StockMovement from '@/models/StockMovement';
 import MovementItem from '@/models/MovementItem';
 import { movementSchema } from '@/schemas/movement';
+import User from '@/models/User';
 import { apiSuccess, apiError, handleApiError } from '@/lib/api-helpers';
 
 export async function GET(req: NextRequest) {

@@ -3,6 +3,9 @@ import { auth } from '@/lib/auth';
 import { connectDB } from '@/lib/db';
 import AlertLog from '@/models/AlertLog';
 import { apiSuccess, apiError } from '@/lib/api-helpers';
+import AlertRule from '@/models/AlertRule';
+import Product from '@/models/Product';
+import Warehouse from '@/models/Warehouse';
 
 export async function GET() {
   const session = await auth();

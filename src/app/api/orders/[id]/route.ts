@@ -4,6 +4,11 @@ import { connectDB } from '@/lib/db';
 import PurchaseOrder from '@/models/PurchaseOrder';
 import PurchaseOrderItem from '@/models/PurchaseOrderItem';
 import { apiSuccess, apiError } from '@/lib/api-helpers';
+import Supplier from '@/models/Supplier';
+import Warehouse from '@/models/Warehouse';
+import User from '@/models/User';
+import ProductVariant from '@/models/ProductVariant';
+import Product from '@/models/Product';
 
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();

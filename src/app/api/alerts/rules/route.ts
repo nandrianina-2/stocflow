@@ -4,6 +4,8 @@ import { connectDB } from '@/lib/db';
 import AlertRule from '@/models/AlertRule';
 import { z } from 'zod';
 import { apiSuccess, apiError, handleApiError } from '@/lib/api-helpers';
+import Product from '@/models/Product';
+import Warehouse from '@/models/Warehouse';
 
 const alertRuleSchema = z.object({
   product:      z.string().min(1),
