@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import {
   LayoutDashboard,
   Package,
@@ -14,18 +15,26 @@ import {
 } from 'lucide-react';
 
 const navigation = [
-  { label: 'Dashboard',    href: '/dashboard',   icon: LayoutDashboard },
-  { label: 'Produits',     href: '/products',    icon: Package          },
-  { label: 'Stock',        href: '/stock',       icon: BarChart3        },
-  { label: 'Mouvements',   href: '/movements',   icon: ArrowLeftRight   },
-  { label: 'Commandes',    href: '/orders',      icon: ShoppingCart     },
-  { label: 'Entrepôts',    href: '/warehouses',  icon: Warehouse        },
-  { label: 'Alertes',      href: '/alerts',      icon: Bell             },
-  { label: 'Paramètres',   href: '/settings',    icon: Settings         },
+  { label: 'Dashboard',  href: '/dashboard',  icon: LayoutDashboard },
+  { label: 'Produits',   href: '/products',   icon: Package          },
+  { label: 'Stock',      href: '/stock',      icon: BarChart3        },
+  { label: 'Mouvements', href: '/movements',  icon: ArrowLeftRight   },
+  { label: 'Commandes',  href: '/orders',     icon: ShoppingCart     },
+  { label: 'Entrepôts',  href: '/warehouses', icon: Warehouse        },
+  { label: 'Alertes',    href: '/alerts',     icon: Bell, badge: true },
+  { label: 'Paramètres', href: '/settings',   icon: Settings         },
 ];
 
 export function Sidebar({ role }: { role: string }) {
-  const pathname = usePathname();
+  const pathname     = usePathname();
+  const [alertCount, setAlertCount] = useState(0);
+
+  useEffect(() => {
+    fetch('/api/alerts/logs')
+      .then((r) => r.json())
+      .then((data) => setAlertCount(Array.isArray(data) ? data.length : 0))
+      .catch(() => null);
+  }, []);
 
   return (
     <aside className="w-60 bg-gray-900 border-r border-gray-800 flex flex-col shrink-0">
@@ -34,8 +43,10 @@ export function Sidebar({ role }: { role: string }) {
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-        {navigation.map(({ label, href, icon: Icon }) => {
+        {navigation.map(({ label, href, icon: Icon, badge }) => {
           const active = pathname === href || pathname.startsWith(href + '/');
+          const count  = badge ? alertCount : 0;
+
           return (
             <Link
               key={href}
@@ -47,7 +58,12 @@ export function Sidebar({ role }: { role: string }) {
               }`}
             >
               <Icon size={16} strokeWidth={2} />
-              {label}
+              <span className="flex-1">{label}</span>
+              {count > 0 && (
+                <span className="bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {count > 9 ? '9+' : count}
+                </span>
+              )}
             </Link>
           );
         })}

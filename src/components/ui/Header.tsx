@@ -2,6 +2,7 @@
 
 import { signOut } from 'next-auth/react';
 import { LogOut, User } from 'lucide-react';
+import { GlobalSearch } from './GlobalSearch';
 
 interface HeaderProps {
   user: {
@@ -14,7 +15,7 @@ interface HeaderProps {
 export function Header({ user }: HeaderProps) {
   return (
     <header className="h-16 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-6 shrink-0">
-      <div />
+      <GlobalSearch />
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">

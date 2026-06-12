@@ -11,4 +11,20 @@ const StockLevelSchema = new Schema({
 
 StockLevelSchema.index({ variant: 1, location: 1 }, { unique: true });
 
+StockLevelSchema.post('findOneAndUpdate', async function (doc) {
+  if (!doc) return;
+  try {
+    const AuditLog = (await import('./AuditLog')).default;
+    await AuditLog.create({
+      collection: 'StockLevel',
+      documentId: doc._id,
+      action:     'update',
+      changes:    this.getUpdate(),
+      changedAt:  new Date(),
+    });
+  } catch {
+    // ne pas bloquer l'opération principale si l'audit échoue
+  }
+});
+
 export default models.StockLevel || model('StockLevel', StockLevelSchema);
