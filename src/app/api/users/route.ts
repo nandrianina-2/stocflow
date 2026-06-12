@@ -8,13 +8,13 @@ import { z } from 'zod';
 import { apiSuccess, apiError, handleApiError } from '@/lib/api-helpers';
 
 const createUserSchema = z.object({
-  name:     z.string().min(1),
-  email:    z.string().email(),
+  name:     z.string().min(1, 'Nom requis'),
+  email:    z.string().email('Email invalide'),
   password: z.string().min(8, 'Minimum 8 caractères'),
-  role:     z.string().min(1),
+  role:     z.string().min(1, 'Rôle requis'),
 });
 
-export async function GET() {
+export async function GET(_req: NextRequest) {
   const session = await auth();
   if (!session || session.user.role !== 'admin') return apiError('Non autorisé', 401);
 
@@ -35,11 +35,21 @@ export async function POST(req: NextRequest) {
 
   try {
     await connectDB();
-    const body     = await req.json();
-    const data     = createUserSchema.parse(body);
-    const hashed   = await bcrypt.hash(data.password, 10);
-    const user     = await User.create({ ...data, password: hashed });
-    return apiSuccess({ ...user.toObject(), password: undefined }, 201);
+    const body   = await req.json();
+    const data   = createUserSchema.parse(body);
+    const hashed = await bcrypt.hash(data.password, 10);
+
+    const user = await User.create({
+      name:     data.name,
+      email:    data.email,
+      password: hashed,
+      role:     data.role,
+    });
+
+    const result = user.toObject();
+    delete (result as any).password;
+
+    return apiSuccess(result, 201);
   } catch (error) {
     return handleApiError(error);
   }
