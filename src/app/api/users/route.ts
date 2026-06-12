@@ -6,7 +6,6 @@ import Role from '@/models/Role';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { apiSuccess, apiError, handleApiError } from '@/lib/api-helpers';
-import Role from '@/models/Role';
 
 const createUserSchema = z.object({
   name:     z.string().min(1),
