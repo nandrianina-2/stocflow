@@ -1,22 +1,14 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { auth } from '@/lib/auth';
+import { connectDB } from '@/lib/db';
+import Product from '@/models/Product';
+import Category from '@/models/Category';
+import Supplier from '@/models/Supplier';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { ProductVariantsClient } from './ProductVariantsClient';
 import { Pencil } from 'lucide-react';
-
-interface Product {
-  _id:         string;
-  name:        string;
-  sku:         string;
-  type:        string;
-  description: string;
-  isActive:    boolean;
-  category:    { name: string } | null;
-  supplier:    { name: string; email: string; phone: string } | null;
-  tags:        string[];
-  createdAt:   string;
-}
 
 const typeLabels: Record<string, string> = {
   physical:     'Physique',
@@ -24,11 +16,18 @@ const typeLabels: Record<string, string> = {
   equipment:    'Équipement',
 };
 
-async function getProduct(id: string): Promise<Product | null> {
-  const baseUrl = process.env.NEXTAUTH_URL ?? 'http://localhost:3000';
-  const res = await fetch(`${baseUrl}/api/products/${id}`, { cache: 'no-store' });
-  if (!res.ok) return null;
-  return res.json();
+async function getProduct(id: string) {
+  const session = await auth();
+  if (!session) return null;
+
+  await connectDB();
+
+  const product = await Product.findById(id)
+    .populate('category', 'name slug')
+    .populate('supplier', 'name email phone')
+    .lean();
+
+  return product;
 }
 
 export default async function ProductDetailPage({
@@ -36,8 +35,8 @@ export default async function ProductDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
-  const product = await getProduct(id);
+  const { id }    = await params;
+  const product   = await getProduct(id) as any;
 
   if (!product) notFound();
 
@@ -67,7 +66,10 @@ export default async function ProductDetailPage({
             </div>
             <div>
               <p className="text-gray-500 mb-1">Statut</p>
-              <Badge label={product.isActive ? 'Actif' : 'Inactif'} variant={product.isActive ? 'success' : 'danger'} />
+              <Badge
+                label={product.isActive ? 'Actif' : 'Inactif'}
+                variant={product.isActive ? 'success' : 'danger'}
+              />
             </div>
             <div>
               <p className="text-gray-500 mb-1">Catégorie</p>
@@ -102,7 +104,7 @@ export default async function ProductDetailPage({
         </div>
       </div>
 
-      <ProductVariantsClient productId={product._id} />
+      <ProductVariantsClient productId={product._id.toString()} />
     </div>
   );
 }

@@ -50,12 +50,17 @@ export async function POST(req: NextRequest) {
     const movement = await StockMovement.create({
       ...movementData,
       createdBy: session.user.id,
-      status: 'draft',
+      status:    'draft',
     });
 
-    await MovementItem.insertMany(
-      items.map((item) => ({ ...item, movement: movement._id }))
-    );
+    const cleanedItems = items.map((item) => ({
+      ...item,
+      movement:     movement._id,
+      fromLocation: item.fromLocation || undefined,
+      toLocation:   item.toLocation   || undefined,
+    }));
+
+    await MovementItem.insertMany(cleanedItems);
 
     return apiSuccess(movement, 201);
   } catch (error) {

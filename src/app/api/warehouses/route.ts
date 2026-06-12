@@ -2,30 +2,39 @@ import { NextRequest } from 'next/server';
 import { auth } from '@/lib/auth';
 import { connectDB } from '@/lib/db';
 import Warehouse from '@/models/Warehouse';
-import { warehouseSchema } from '@/schemas/warehouse';
-import { apiSuccess, apiError, handleApiError } from '@/lib/api-helpers';
+import WarehouseLocation from '@/models/WarehouseLocation';
+import StockLevel from '@/models/StockLevel';
+import { apiSuccess, apiError } from '@/lib/api-helpers';
 
-export async function GET() {
+export async function DELETE(
+  _: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   const session = await auth();
-  if (!session) return apiError('Non autorisé', 401);
+  if (!session || session.user.role !== 'admin') return apiError('Non autorisé', 401);
 
   await connectDB();
 
-  const warehouses = await Warehouse.find({ isActive: true }).sort({ name: 1 }).lean();
-  return apiSuccess(warehouses);
-}
+  const { id } = await params;
 
-export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session) return apiError('Non autorisé', 401);
+  const locations  = await WarehouseLocation.find({ warehouse: id }).lean();
+  const locationIds = locations.map((l) => l._id);
 
-  try {
-    await connectDB();
-    const body = await req.json();
-    const data = warehouseSchema.parse(body);
-    const warehouse = await Warehouse.create(data);
-    return apiSuccess(warehouse, 201);
-  } catch (error) {
-    return handleApiError(error);
+  if (locationIds.length) {
+    const hasStock = await StockLevel.findOne({
+      location: { $in: locationIds },
+      quantity: { $gt: 0 },
+    }).lean();
+
+    if (hasStock) {
+      return apiError('Cet entrepôt contient du stock — videz-le avant de le supprimer', 400);
+    }
+
+    await WarehouseLocation.deleteMany({ warehouse: id });
   }
+
+  const warehouse = await Warehouse.findByIdAndDelete(id);
+  if (!warehouse) return apiError('Entrepôt introuvable', 404);
+
+  return apiSuccess({ message: 'Entrepôt supprimé' });
 }

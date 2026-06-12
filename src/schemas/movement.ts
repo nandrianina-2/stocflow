@@ -3,8 +3,8 @@ import { z } from 'zod';
 export const movementItemSchema = z.object({
   variant:      z.string().min(1),
   quantity:     z.number().min(1),
-  fromLocation: z.string().optional(),
-  toLocation:   z.string().optional(),
+  fromLocation: z.string().min(1).optional().or(z.literal('')).transform((v) => v || undefined),
+  toLocation:   z.string().min(1).optional().or(z.literal('')).transform((v) => v || undefined),
   unitCost:     z.number().optional(),
   batchNumber:  z.string().optional(),
   expiresAt:    z.string().optional(),

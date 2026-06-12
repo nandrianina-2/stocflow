@@ -1,33 +1,16 @@
 import { notFound } from 'next/navigation';
+import { auth } from '@/lib/auth';
+import { connectDB } from '@/lib/db';
+import PurchaseOrder from '@/models/PurchaseOrder';
+import PurchaseOrderItem from '@/models/PurchaseOrderItem';
+import Supplier from '@/models/Supplier';
+import Warehouse from '@/models/Warehouse';
+import User from '@/models/User';
+import ProductVariant from '@/models/ProductVariant';
+import Product from '@/models/Product';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { OrderActionsClient } from './OrderActionsClient';
-
-interface OrderItem {
-  _id:              string;
-  quantityOrdered:  number;
-  quantityReceived: number;
-  unitPrice:        number;
-  variant: {
-    sku:     string;
-    product: { name: string } | null;
-  } | null;
-}
-
-interface PurchaseOrder {
-  _id:         string;
-  reference:   string;
-  supplierRef: string;
-  status:      string;
-  expectedAt:  string;
-  receivedAt:  string;
-  notes:       string;
-  createdAt:   string;
-  supplier:    { name: string; email: string; phone: string } | null;
-  warehouse:   { _id: string; name: string; code: string } | null;
-  createdBy:   { name: string } | null;
-  items:       OrderItem[];
-}
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'info' | 'warning' | 'success' | 'danger' }> = {
   draft:     { label: 'Brouillon',   variant: 'default' },
@@ -37,11 +20,26 @@ const statusConfig: Record<string, { label: string; variant: 'default' | 'info' 
   cancelled: { label: 'Annulé',      variant: 'danger'  },
 };
 
-async function getOrder(id: string): Promise<PurchaseOrder | null> {
-  const baseUrl = process.env.NEXTAUTH_URL ?? 'http://localhost:3000';
-  const res = await fetch(`${baseUrl}/api/orders/${id}`, { cache: 'no-store' });
-  if (!res.ok) return null;
-  return res.json();
+async function getOrder(id: string) {
+  const session = await auth();
+  if (!session) return null;
+
+  await connectDB();
+
+  const [order, items] = await Promise.all([
+    PurchaseOrder.findById(id)
+      .populate('supplier',  'name email phone')
+      .populate('warehouse', 'name code')
+      .populate('createdBy', 'name')
+      .lean(),
+    PurchaseOrderItem.find({ order: id })
+      .populate({ path: 'variant', populate: { path: 'product', select: 'name sku' } })
+      .lean(),
+  ]);
+
+  if (!order) return null;
+
+  return { ...order, items };
 }
 
 export default async function OrderDetailPage({
@@ -50,18 +48,18 @@ export default async function OrderDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id }  = await params;
-  const order   = await getOrder(id);
+  const order   = await getOrder(id) as any;
 
   if (!order) notFound();
 
   const statusInfo = statusConfig[order.status];
-  const total      = order.items.reduce((sum, i) => sum + i.quantityOrdered * i.unitPrice, 0);
+  const total      = order.items.reduce((sum: number, i: any) => sum + i.quantityOrdered * i.unitPrice, 0);
   const canReceive = order.status === 'draft' || order.status === 'sent' || order.status === 'partial';
 
   return (
     <div className="max-w-4xl">
       <PageHeader
-        title={`Bon de commande — ${order.reference ?? order._id.slice(-8).toUpperCase()}`}
+        title={`Bon de commande — ${order.reference ?? order._id.toString().slice(-8).toUpperCase()}`}
         description={`Créé le ${new Date(order.createdAt).toLocaleDateString('fr-FR')}`}
         action={
           <Badge
@@ -125,8 +123,8 @@ export default async function OrderDetailPage({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-800">
-            {order.items.map((item) => (
-              <tr key={item._id} className="hover:bg-gray-800/40 transition-colors">
+            {order.items.map((item: any) => (
+              <tr key={item._id.toString()} className="hover:bg-gray-800/40 transition-colors">
                 <td className="px-4 py-3 text-white">{item.variant?.product?.name ?? '—'}</td>
                 <td className="px-4 py-3 text-gray-400 font-mono text-xs">{item.variant?.sku ?? '—'}</td>
                 <td className="px-4 py-3 text-white">{item.quantityOrdered}</td>
@@ -147,9 +145,17 @@ export default async function OrderDetailPage({
 
       {canReceive && (
         <OrderActionsClient
-          orderId={order._id}
-          warehouseId={order.warehouse?._id ?? ''}
-          items={order.items}
+          orderId={order._id.toString()}
+          warehouseId={order.warehouse?._id?.toString() ?? ''}
+          items={order.items.map((i: any) => ({
+            _id:              i._id.toString(),
+            quantityOrdered:  i.quantityOrdered,
+            quantityReceived: i.quantityReceived,
+            variant:          i.variant ? {
+              sku:     i.variant.sku,
+              product: i.variant.product ? { name: i.variant.product.name } : null,
+            } : null,
+          }))}
         />
       )}
     </div>
